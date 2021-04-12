@@ -11,15 +11,19 @@ import ubr.persanal.todolist.R
 import ubr.persanal.todolist.data.entity.TodoData
 import ubr.persanal.todolist.databinding.DialogAddTodoBinding
 import ubr.persanal.todolist.ui.BaseInterface
+import java.text.FieldPosition
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) :
+class AddTodoDialog(
+    val todoData: TodoData,
+    context: Context,
+    private val baseInterface: BaseInterface,
+) :
     Dialog(context, R.style.Animation_Design_BottomSheetDialog) {
 
     private lateinit var binding: DialogAddTodoBinding
     private val calendar = Calendar.getInstance()
-    private val todoData = TodoData(0, "", "", "", false, 1, "Note is empty")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,11 +32,20 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
         binding = DialogAddTodoBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initViews()
+        setPriority()
     }
 
     private fun initViews() {
 
-        binding.selectDateButton.text = SimpleDateFormat("dd MMM, YYYY").format(calendar.time)
+        binding.selectDateButton.text =
+            if (todoData.date.isEmpty()) {
+                todoData.date = SimpleDateFormat("dd MMM, yyyy").format(calendar.time)
+                todoData.date
+            }
+            else todoData.date
+
+        binding.selectTimeButton.text = todoData.time
+        binding.inputTitle.setText(todoData.name)
 
         binding.toolbar.setNavigationOnClickListener {
             dismiss()
@@ -40,10 +53,18 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
 
         binding.saveButton.setOnClickListener {
 
-            todoData.name = binding.inputName.text.toString()
-            todoData.note = binding.inputNote.text.toString()
-            baseInterface.saveTodo(todoData)
-            dismiss()
+            todoData.name = binding.inputTitle.text.toString()
+            if (binding.inputNote.text.toString().isNotEmpty())
+                todoData.note = binding.inputNote.text.toString()
+
+            todoData.notificationTime = calendar.timeInMillis
+
+            if (todoData.name.isEmpty())
+                binding.inputTitle.error = "Title required"
+            else{
+                baseInterface.saveTodo(todoData)
+                dismiss()
+            }
         }
 
         binding.selectDateButton.setOnClickListener {
@@ -60,6 +81,8 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
             showPriorityDialog()
         }
 
+        calendar.clear()
+        calendar.timeInMillis = System.currentTimeMillis()
     }
 
     private fun showDatePickerDialog() {
@@ -68,9 +91,8 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
             calendar.set(Calendar.YEAR, year)
             calendar.set(Calendar.MONTH, month)
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            todoData.date = SimpleDateFormat("dd MMM, YYYY").format(calendar.time)
+            todoData.date = SimpleDateFormat("dd MMM, yyyy").format(calendar.time)
             binding.selectDateButton.text = todoData.date
-            Log.d("TTTTT", todoData.date)
         }
 
         DatePickerDialog(
@@ -85,12 +107,13 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
     private fun showTimePickerDialog() {
 
         val listener = TimePickerDialog.OnTimeSetListener { _, hour, minute ->
-            calendar.set(Calendar.HOUR, hour)
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
             calendar.set(Calendar.MINUTE, minute)
-            todoData.time = SimpleDateFormat("hh:mm").format(calendar.time)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+          //  calendar.set(Calendar.AM_PM, Calendar.PM)
+            todoData.time = SimpleDateFormat("HH:mm a").format(calendar.time)
             binding.selectTimeButton.text = todoData.time
-
-            Log.d("TTTTT", todoData.time)
         }
 
         TimePickerDialog(
@@ -121,15 +144,7 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
 
         dialog.setPositiveButton("Ok") { p0, _ ->
             todoData.priority = status
-
-            binding.selectStatusButton.setIconTintResource(
-                when (status) {
-                    0 -> R.color.status_0
-                    1 -> R.color.status_1
-                    2 -> R.color.status_2
-                    else -> R.color.status_1
-                }
-            )
+            setPriority()
             p0.dismiss()
         }
 
@@ -138,6 +153,17 @@ class AddTodoDialog(context: Context, private val baseInterface: BaseInterface) 
         }
 
         dialog.create().show()
+    }
+
+    private fun setPriority(){
+        binding.selectStatusButton.setIconTintResource(
+            when (todoData.priority) {
+                0 -> R.color.status_0
+                1 -> R.color.status_1
+                2 -> R.color.status_2
+                else -> R.color.status_1
+            }
+        )
     }
 
 

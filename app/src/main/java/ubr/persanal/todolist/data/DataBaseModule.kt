@@ -22,7 +22,10 @@ class DataBaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext appContext: Context): AppDataBase {
-        return Room.databaseBuilder(appContext, AppDataBase::class.java, "todo").build()
+        return Room.databaseBuilder(appContext, AppDataBase::class.java, "todo")
+            .allowMainThreadQueries()
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
 

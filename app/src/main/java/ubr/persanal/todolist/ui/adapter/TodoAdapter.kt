@@ -1,27 +1,43 @@
 package ubr.persanal.todolist.ui.adapter
 
 import android.graphics.Paint
+import android.media.MediaPlayer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
+import com.chauthai.swipereveallayout.ViewBinderHelper
 import ubr.persanal.todolist.R
 import ubr.persanal.todolist.data.entity.TodoData
 import ubr.persanal.todolist.databinding.ItemTodoBinding
+import ubr.persanal.todolist.ui.BaseInterface
 
-class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolderTodo>() {
+class TodoAdapter(val baseInterface: BaseInterface) :
+    RecyclerView.Adapter<TodoAdapter.ViewHolderTodo>() {
 
-    private val dataList = arrayListOf<TodoData>()
+    private var dataList = arrayListOf<TodoData>()
+    private val viewBindHelper = ViewBinderHelper()
 
-    inner class ViewHolderTodo(private val itemTodoBinding: ItemTodoBinding) :
+    inner class ViewHolderTodo(val itemTodoBinding: ItemTodoBinding) :
         RecyclerView.ViewHolder(itemTodoBinding.root) {
 
         fun bind(data: TodoData) {
 
             itemTodoBinding.todoName.text = data.name
-            itemTodoBinding.todoDate.text = data.time
+            itemTodoBinding.todoDate.text =
+                if (data.time.equals("time",true)) data.date
+                else "${data.time}   ${data.date}"
+
             itemTodoBinding.todoNote.text = data.note
-            itemTodoBinding.animatedCheckBox.isChecked = data.isDone
+            itemTodoBinding.checkBox.isChecked = data.isDone
+            itemTodoBinding.buttonEdit.visibility = if (data.isDone) View.GONE else View.VISIBLE
+            itemTodoBinding.buttonDelete.visibility = if (data.isDone) View.VISIBLE else View.GONE
+
+            var flag =
+                if (data.isDone) Paint.STRIKE_THRU_TEXT_FLAG else itemTodoBinding.todoNote.paintFlags
+            setStrikeToText(itemTodoBinding.todoName, itemTodoBinding.todoDate, flag)
 
             itemTodoBinding.priority.drawable.setTint(
                 when (data.priority) {
@@ -30,6 +46,13 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolderTodo>() {
                     else -> itemView.context.resources.getColor(R.color.status_2)
                 }
             )
+
+            itemTodoBinding.buttonDelete.setOnClickListener {
+                baseInterface.deleteTodo(data, adapterPosition)
+            }
+            itemTodoBinding.buttonEdit.setOnClickListener {
+                baseInterface.editTodo(data, adapterPosition)
+            }
 
             itemTodoBinding.todoShowHideNote.setOnClickListener {
 
@@ -43,13 +66,31 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolderTodo>() {
                 }
             }
 
-            itemTodoBinding.animatedCheckBox.setOnCheckedChangeListener { _, checked ->
-                if (checked)
-                    itemTodoBinding.todoName.paintFlags = Paint.STRIKE_THRU_TEXT_FLAG
-                else itemTodoBinding.todoName.paintFlags = itemTodoBinding.todoDate.paintFlags
+            itemTodoBinding.checkBox.setOnClickListener { view ->
+
+                view as CheckBox
+                flag =
+                    if (view.isChecked) Paint.STRIKE_THRU_TEXT_FLAG else itemTodoBinding.todoNote.paintFlags
+                setStrikeToText(itemTodoBinding.todoName, itemTodoBinding.todoDate, flag)
+                data.isDone = view.isChecked
+
+                baseInterface.updateTodo(data, position = adapterPosition)
+
+                if (view.isChecked)
+                    MediaPlayer.create(itemTodoBinding.root.context, R.raw.complete).start()
+
             }
         }
 
+    }
+
+    private fun setStrikeToText(
+        textView0: AppCompatTextView,
+        textView1: AppCompatTextView,
+        flag: Int
+    ) {
+        textView0.paintFlags = flag
+        textView1.paintFlags = flag
     }
 
     private fun showHideAnimation(view: View, isShow: Boolean) {
@@ -72,17 +113,30 @@ class TodoAdapter : RecyclerView.Adapter<TodoAdapter.ViewHolderTodo>() {
 
     override fun onBindViewHolder(holder: ViewHolderTodo, position: Int) {
         holder.bind(dataList[position])
+        viewBindHelper.bind(holder.itemTodoBinding.swipeLayout, dataList[position].id.toString())
     }
 
     override fun getItemCount(): Int {
         return dataList.size
     }
 
-    fun setData(data: List<TodoData>) {
+    fun removeItem(position: Int) {
+        dataList.removeAt(position)
+        notifyItemRemoved(position)
+    }
 
-        if (dataList.isNotEmpty()) dataList.clear()
+    fun setData(data: List<TodoData>) {
+        dataList.clear()
         dataList.addAll(data)
         notifyDataSetChanged()
+    }
+
+
+    fun addItem(todoData: TodoData?, position: Int) {
+        if (todoData != null) {
+            dataList.add(position, todoData)
+            notifyItemInserted(position)
+        }
     }
 
 

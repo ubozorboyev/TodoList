@@ -10,11 +10,11 @@ interface TodoListDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addTodo(todoData: TodoData): Long
 
-    @Update
+    @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateTodoData(todoData: TodoData)
 
     @Delete
-    suspend fun deleteTodo(todoData: TodoData)
+    suspend fun deleteTodo(todoData: TodoData):Int
 
     @Query("SELECT * FROM todo_table")
     fun getAllTodo(): Flow<List<TodoData>>
@@ -23,6 +23,6 @@ interface TodoListDao {
     fun getProgressTodo(): Flow<List<TodoData>>
 
     @Query("SELECT * FROM todo_table WHERE isDone=1")
-    fun getDoneTodo(): LiveData<List<TodoData>>
+    fun getDoneTodo(): Flow<List<TodoData>>
 
 }

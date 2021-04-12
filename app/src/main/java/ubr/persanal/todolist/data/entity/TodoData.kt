@@ -12,5 +12,6 @@ data class TodoData(
     var time: String,
     var isDone: Boolean,
     var priority: Int,
-    var note: String
+    var note: String,
+    var notificationTime : Long? = null
 )

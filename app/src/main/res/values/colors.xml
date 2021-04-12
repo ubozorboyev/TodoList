@@ -14,5 +14,8 @@
     <color name="status_1">#76F377</color>
     <color name="status_2">#F3E164</color>
 
+    <color name="bold_text_color">#1F2247</color>
+    <color name="medium_text_color">#B31F2247</color>
+
 
 </resources>

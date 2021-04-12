@@ -2,11 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:title="All"
+        android:icon="@drawable/ic_all_todo"
         android:id="@+id/allTodoFragment"/>
 
     <item android:title="Progress"
+        android:icon="@drawable/ic_progress"
         android:id="@+id/progressFragment"/>
+
     <item android:title="Done"
+        android:icon="@drawable/ic_done"
          android:id="@+id/doneFragment"/>
 
 </menu>

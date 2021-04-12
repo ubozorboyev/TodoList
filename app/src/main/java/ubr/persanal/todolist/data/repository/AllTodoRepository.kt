@@ -1,8 +1,10 @@
 package ubr.persanal.todolist.data.repository
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import ubr.persanal.todolist.data.TodoListDao
 import ubr.persanal.todolist.data.entity.TodoData
 import ubr.persanal.todolist.util.DataState
@@ -16,20 +18,20 @@ class AllTodoRepository @Inject constructor(private val todoListDao: TodoListDao
         emit(DataState.Loading)
 
         try {
-            delay(1000)
             todoListDao.addTodo(todoData)
+           // delay(500)
             emit(DataState.Success)
-
         } catch (e: java.lang.Exception) {
             emit(DataState.Error(e.message))
         }
     }
 
-    suspend fun upDateTodo(todoData: TodoData) = todoListDao.updateTodoData(todoData)
 
     fun getAllTodoLive(): Flow<List<TodoData>> = todoListDao.getAllTodo()
 
-     fun getProgress() = todoListDao.getProgressTodo()
+
+    suspend fun deleteTodo(todoData: TodoData):Int = todoListDao.deleteTodo(todoData)
+
 
 
 }
